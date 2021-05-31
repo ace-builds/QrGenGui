@@ -15,49 +15,58 @@ class QrGen(QtWidgets.QMainWindow):
         self.generate.clicked.connect(self.generateQr)
         self.clear.clicked.connect(self.clearTxtbox)
         self.sideThread = requestThread()
-        
+
         self.show()
 
+# When Generate button is clicked
     def generateQr(self):
         if not self.url.toPlainText():
             self.messageB("Insert URL")
         elif self.generate.text().lower() == 'save':
             self.saveFunc()
         else:
-            try:
+            try: #to check errors gotten from the request
                 req_str = f"http://chart.apis.google.com/chart?cht=qr&chs=500x500&chl={self.url.toPlainText()}&chld=H|0"
                 self.sideThread.run(req_str)
                 while self.sideThread.done != True:
                     pass
-                
+
                 self.setFinal()
-            except rq.RequestException:
+
+            except rq.RequestException: #Executes when there is a request error eg. Bad network
                 self.messageB("Could not connect to internet, check your internet connection and try again")
-                
+
             except Exception:
                self.messageB("Contact Developer")
-    def saveFunc(self):
+
+    def saveFunc(self): #Opens the save dialog
         name = QFileDialog.getSaveFileName(self, 'Save File',"Qrcode.png", "Image files (*.png)")
+
+    # Handles the popups
     def messageB(self,str):
         msg1= QMessageBox()
         msg1.setText(str)
         msg1.setWindowTitle("QR code generator")
         msg1.exec_()
 
+# Reset imageb button text and url textbox
     def clearTxtbox(self):
         self.url.setText("")
         self.img.setPixmap(QtGui.QPixmap("meme.png"))
         self.generate.setText("Generate QR code")
-    
+
+# Set Qrcode image
     def setFinal(self):
         self.img.setPixmap(QtGui.QPixmap("images/img.png"))
         self.generate.setText("Save")
 
+
+# Thread handles the request and saving of file gotten from the request
 class requestThread(QtCore.QThread):
     def __init__(self, parent=None):
         super(requestThread, self).__init__(parent)
         self.done =False
-    
+
     def run(self,link):
         response = rq.get(link)
         file = open(f"images/img.png", "wb")
